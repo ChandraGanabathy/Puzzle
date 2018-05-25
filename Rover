@@ -1,0 +1,91 @@
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Data.OleDb;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Web;
+using System.Web.Http;
+using WebAPI.Models;
+
+namespace WebAPI.Controllers
+{
+    public class RoverController : ApiController
+    {
+        public static ConcurrentDictionary<string, string> RoverConcurrentDictionary = new ConcurrentDictionary<string, string>();
+
+        public IEnumerable<string> Get()
+        {
+            return new string[] { "value1", "value2" };
+        }
+
+        public HttpResponseMessage GetRoverPosition(string RoverID)
+        {
+            try
+            {
+                RoverOutput output = null;
+
+                if (RoverID != null)
+                {
+                    string currentposition=String.Empty;
+                    RoverConcurrentDictionary.TryGetValue(RoverID, out currentposition);
+
+                    output = new RoverOutput()
+                    {
+                        CurrentPosition = currentposition,
+                        Message = "Position has been retrieved successfully."
+                    };
+                }
+
+                return Request.CreateResponse<RoverOutput>(HttpStatusCode.NoContent, output);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
+            }
+        }
+
+        public HttpResponseMessage PostRoverMovement([FromBody]Rover rover)
+        {
+
+            try
+            {
+                RoverOutput output = new RoverOutput();
+
+                if (rover == null)
+                {
+                    output.Message = "Please provide valid input values.";
+                    return Request.CreateResponse<RoverOutput>(HttpStatusCode.NoContent, output);
+                }
+                if (rover.MovementInstruction.Contains("RML"))
+                {
+                    output.Message = "Please provide input in specified characters(RML)";
+                    return Request.CreateResponse<RoverOutput>(HttpStatusCode.PreconditionFailed, output);
+                }
+              
+                int indexL = rover.MovementInstruction.IndexOf("L");
+
+                if (indexL <= 0)
+                {
+                    output.Message = "Please provide left unit.";
+                    return Request.CreateResponse<RoverOutput>(HttpStatusCode.PreconditionFailed, output);
+                }
+                
+                string rightunits = rover.MovementInstruction.Substring(1, indexL - 1);
+                string leftunits = rover.MovementInstruction.Substring(indexL + 1);
+
+                RoverConcurrentDictionary.AddOrUpdate(rover.RoverID, rover.MovementInstruction,
+                    (key, oldvalue) => rover.RoverID);
+
+                output.CurrentPosition = string.Format("({0},{1})", rightunits.Length, leftunits.Length);
+                output.Message = "Position has been set successfully";
+                return Request.CreateResponse<RoverOutput>(HttpStatusCode.OK, output);
+            }
+            catch (Exception ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
+            }
+        }
+    }
+}
