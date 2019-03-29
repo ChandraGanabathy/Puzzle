@@ -21,6 +21,13 @@ class ExcelHeaderToNumbers
             sum += columnName.Length > 1 ? generateColumnIndex(columnName.Substring(1)) : generateColumnIndex(columnName);
             return sum;
         }
+            
+         //public static int ColumnToNumber(string column)
+        //{
+        //    if (column.Length == 1)
+        //        return ((int)column[0]) - 'A';
+        //    else
+        //        return (((((int)column[0]) - 'A' + 1) * 26) + ((int)column[1]) - 'A');
+        //}
 
-
-    }
+    }   
